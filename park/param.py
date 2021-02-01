@@ -57,29 +57,33 @@ parser.add_argument('--warmup_delay', type=int, default=1000,
                     help='Executor warming up delay (milliseconds) (default: 1000)')
 
 # -- Query Optimizer --
-parser.add_argument('--qopt_java_output', action="store_false",
+parser.add_argument('--qopt_java_output', type=int, default=0,
+                    help="should the java servers output be visible")
+parser.add_argument('--qopt_use_java', type=int, default=0,
                     help="should the java servers output be visible")
 # TODO: need to add more control for this
 parser.add_argument('--qopt_viz', type=int, default=0,
                     help="visualizations per episode")
 
 # parameters to be passed to the calcite backend
-parser.add_argument('--qopt_eval_runtime', type=int, default=0,
-                    help="execute query plan on db, to get runtimes, when evaluating")
-parser.add_argument('--qopt_train_runtime', type=int, default=0,
-                    help="train using runtimes from DB")
+# parser.add_argument('--qopt_eval_runtime', type=int, default=0,
+                    # help="execute query plan on db, to get runtimes, when evaluating")
+# parser.add_argument('--qopt_train_runtime', type=int, default=0,
+                    # help="train using runtimes from DB")
 
 parser.add_argument('--qopt_port', type=int, default=2654,
                     help="port for communicaton with calcite backend")
-parser.add_argument('--qopt_query', type=int, default=0,
-                    help="index of the query to run")
+parser.add_argument('--qopt_query', type=str, default="",
+                    help="list of query name substrings")
 parser.add_argument('--qopt_train', type=int, default=1,
                     help="""0 or 1. To run in training mode or test mode. Check
                     the calcite backend for more description of the two
                     modes.""")
-parser.add_argument('--qopt_only_final_reward', type=int,default=0, 
-                    help="""0 or 1. If true, then only the final reward will be
+parser.add_argument('--qopt_final_reward', type=int,default=0,
+                    help="""0 or 1. If true, then the final reward will be
                     returned.""")
+parser.add_argument('--qopt_no_intermediate_reward', type=int,default=0,
+                    help="""0 or 1.""")
 parser.add_argument('--qopt_lopt', type=int,default=0, help="0 or 1")
 parser.add_argument('--qopt_exh', type=int,default=0, help="0 or 1")
 parser.add_argument('--qopt_verbose', type=int,default=0, help="0 or 1")
@@ -88,20 +92,41 @@ parser.add_argument('--qopt_only_attr_features', type=int, required=False,
                             default=1, help='')
 
 parser.add_argument('--qopt_reward_normalization', type=str, required=False,
-                            default='min_max', help='type of reward normalization')
+                            default='',
+                            help='type of reward normalization')
 parser.add_argument('--qopt_cost_model', type=str, required=False,
-                            default='rowCount', help='')
+                            default='MM', help='')
 parser.add_argument('--qopt_dataset', type=str, required=False,
                             default='JOB', help='')
 parser.add_argument('--qopt_clear_cache', type=int, required=False,
+                            default=1, help='')
+parser.add_argument('--qopt_get_sql', type=int, required=False,
                             default=0, help='')
 parser.add_argument('--qopt_recompute_fixed_planners', type=int, required=False,
-                            default=0, help='')
+                            default=1, help='')
+parser.add_argument('--qopt_test_size', type=float, required=False,
+                            default=0.5, help='')
+parser.add_argument('--qopt_test_seed', type=int, required=False,
+                            default=1234, help='')
+parser.add_argument('--qopt_test_cardinalities', type=int, required=False,
+                            default=1, help='Use the RL interface, or for cardinalities')
+
+parser.add_argument('--qopt_num_execution_reps', type=int, required=False,
+                            default=1, help='')
+parser.add_argument('--qopt_max_execution_time', type=int, required=False,
+                            default=1200, help='in seconds')
+parser.add_argument('--qopt_log_file', type=str, required=False,
+                            default="./java.log", help='')
+parser.add_argument('--qopt_scan_cost_factor', type=float, default=0.02,
+                    help="cost of scanning in base table for cost model")
+parser.add_argument('--qopt_use_index_nested_lj', type=int, required=False,
+                            default=1,
+                            help="use index nested loop joins in cost model")
 
 # -- Cache --
-parser.add_argument('--cache_trace', type=str, required=False, default='test', 
+parser.add_argument('--cache_trace', type=str, required=False, default='test',
                     help='trace selection')
-parser.add_argument('--cache_size', type=int, required=False, default=1024, 
+parser.add_argument('--cache_size', type=int, required=False, default=1024,
                     help='size of network cache')
 
 # -- Simple Queue --
