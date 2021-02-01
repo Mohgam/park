@@ -55,9 +55,6 @@ class TraceSrc(object):
         done = (self.req + 1) >= self.n_request
         return obs, done
 
-    def trace_done(self):
-        return done 
-
 class CacheSim(object):
     def __init__(self, cache_size, policy, action_space, state_space):
         # invariant
@@ -77,13 +74,12 @@ class CacheSim(object):
         self.cache_size = cache_size
         self.policy = policy
         self.action_space = action_space
-        self.state_space = state_space
+        self.observation_space = state_space
         self.req = 0
         self.non_cache = defaultdict(list)
         self.cache = defaultdict(list)  # requested items with caching
         self.cache_pq = []
         self.cache_remain = self.cache_size
-        self.last_req_time_dict = {}
         self.count_ohr = 0
         self.count_bhr = 0
         self.size_all = 0
@@ -94,7 +90,6 @@ class CacheSim(object):
         self.cache = defaultdict(list)
         self.cache_pq = []
         self.cache_remain = self.cache_size
-        self.last_req_time_dict = {}
         self.count_ohr = 0
         self.count_bhr = 0
         self.size_all = 0
@@ -105,16 +100,6 @@ class CacheSim(object):
         cache_size_online_remain = self.cache_remain
         discard_obj_if_admit = []
         obj_time, obj_id, obj_size = obj[0], obj[1], obj[2]
-
-
-        # Initialize the last request time
-        try:
-            self.last_req_time_dict[obj_id] = req - self.cache[obj[1]][1]
-        except IndexError:
-            try:
-                self.last_req_time_dict[obj_id] = req - self.non_cache[obj[1]][1]
-            except IndexError:
-                self.last_req_time_dict[obj_id] = 500
 
         # create the current state for cache simulator
         cost = 0
@@ -196,7 +181,10 @@ class CacheSim(object):
 
     def get_state(self, obj=[0, 0, 0, 0]):
         '''
-        Return the state of the object,  [obj_size, cache_size_online_remain, self.last_req_time_dict[obj_id]]
+        Return the state of the object,  [obj_size, cache_size_online_remain, recency (steps since object was last visited) = req - last visited time]
+        If an object has never been seen before, assigned a constant for the recency feature.
+        For more information, see Learning Caching Policies with Subsampling:
+            http://mlforsystems.org/assets/papers/neurips2019/learning_wang_2019.pdf
         '''
         obj_time, obj_id, obj_size = obj[0], obj[1], obj[2]
         try:
@@ -205,7 +193,8 @@ class CacheSim(object):
             try:
                 req = self.req - self.non_cache[obj_id][1]
             except IndexError:
-                req = 500
+                # Unseen objects (not in non_cache or cache) are assigned this recency constant
+                req = config.cache_unseen_recency
         state = [obj_size, self.cache_remain, req]
 
         return state
@@ -239,7 +228,7 @@ class CacheEnv(core.Env):
 
         # set up the state and action space
         self.action_space = spaces.Discrete(2)
-        self.state_space = spaces.Box(self.src.min_values, \
+        self.observation_space = spaces.Box(self.src.min_values, \
                                       self.src.max_values, \
                                       dtype=np.float32)
 
@@ -247,12 +236,12 @@ class CacheEnv(core.Env):
         self.sim = CacheSim(cache_size=self.cache_size, \
                             policy='lru', \
                             action_space=self.action_space, \
-                            state_space=self.state_space)
+                            state_space=self.observation_space)
 
         # reset environment (generate new jobs)
         self.reset(1, 2)
 
-    def reset(self, low=1, high=1001):
+    def reset(self, low=0, high=1000):
         new_trace = self.np_random.randint(low, high)
         self.src.reset(new_trace)
         self.sim.reset()

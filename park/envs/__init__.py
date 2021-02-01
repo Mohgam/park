@@ -2,7 +2,6 @@
 
 from park.envs.registration import register, make
 
-
 register(
     env_id='load_balance',
     entry_point='park.envs.load_balance:LoadBalanceEnv',
@@ -28,10 +27,10 @@ register(
     entry_point='park.envs.congestion_control:CongestionControlEnv',
 )
 
-register(
-    env_id='spark',
-    entry_point='park.envs.spark:SparkEnv',
-)
+# register(
+#     env_id='spark',  # under maintenance
+#     entry_point='park.envs.spark:SparkEnv',
+# )
 
 register(
     env_id='spark_sim',
@@ -77,3 +76,9 @@ register(
     env_id='region_assignment',
     entry_point='park.envs.region_assignment:RegionAssignmentEnv'
 )
+
+register(
+    env_id='multi_dim_index',
+    entry_point='park.envs.multi_dim_index:MultiDimIndexEnv'
+)
+
